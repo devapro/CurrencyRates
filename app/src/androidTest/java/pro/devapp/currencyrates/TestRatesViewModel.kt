@@ -14,10 +14,9 @@ import org.mockito.MockitoAnnotations
 import pro.devapp.core.entities.EntityCurrency
 import pro.devapp.currencyrates.ui.MainActivity
 import pro.devapp.currencyrates.ui.rates.RatesViewModel
-import pro.devapp.currencyrates.usecases.GetCurrencyByCodeUseCase
+import pro.devapp.currencyrates.usecases.CreateCurrencyByCodeUseCase
 import pro.devapp.currencyrates.usecases.GetRatesListUseCase
-import pro.devapp.storage.getCurrencyDetailsRepository
-import pro.devapp.storage.getCurrencyRatesRepository
+import pro.devapp.storage.Storage
 import java.util.concurrent.TimeUnit
 
 @RunWith(AndroidJUnit4::class)
@@ -43,8 +42,8 @@ class TestRatesViewModel {
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
         val viewModel = RatesViewModel(
             mainActivityTestRule.activity.application,
-            GetRatesListUseCase(getCurrencyRatesRepository(appContext)),
-            GetCurrencyByCodeUseCase(getCurrencyDetailsRepository(appContext))
+            GetRatesListUseCase(Storage.getCurrencyRatesRepository(appContext)),
+            CreateCurrencyByCodeUseCase(Storage.getCurrencyDetailsRepository(appContext))
         )
 
         viewModel.currencyList.observeForever(observerRatesList)
@@ -62,8 +61,8 @@ class TestRatesViewModel {
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
         val viewModel = RatesViewModel(
             mainActivityTestRule.activity.application,
-            GetRatesListUseCase(getCurrencyRatesRepository(appContext)),
-            GetCurrencyByCodeUseCase(getCurrencyDetailsRepository(appContext))
+            GetRatesListUseCase(Storage.getCurrencyRatesRepository(appContext)),
+            CreateCurrencyByCodeUseCase(Storage.getCurrencyDetailsRepository(appContext))
         )
 
         viewModel.errorMessage.observeForever(observerErrorMessages)
@@ -89,8 +88,8 @@ class TestRatesViewModel {
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
         val viewModel = RatesViewModel(
             mainActivityTestRule.activity.application,
-            GetRatesListUseCase(getCurrencyRatesRepository(appContext)),
-            GetCurrencyByCodeUseCase(getCurrencyDetailsRepository(appContext))
+            GetRatesListUseCase(Storage.getCurrencyRatesRepository(appContext)),
+            CreateCurrencyByCodeUseCase(Storage.getCurrencyDetailsRepository(appContext))
         )
 
         viewModel.currencyList.observeForever(observerRatesList)
@@ -113,8 +112,8 @@ class TestRatesViewModel {
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
         val viewModel = RatesViewModel(
             mainActivityTestRule.activity.application,
-            GetRatesListUseCase(getCurrencyRatesRepository(appContext)),
-            GetCurrencyByCodeUseCase(getCurrencyDetailsRepository(appContext))
+            GetRatesListUseCase(Storage.getCurrencyRatesRepository(appContext)),
+            CreateCurrencyByCodeUseCase(Storage.getCurrencyDetailsRepository(appContext))
         )
 
         viewModel.currencyList.observeForever(observerRatesList)

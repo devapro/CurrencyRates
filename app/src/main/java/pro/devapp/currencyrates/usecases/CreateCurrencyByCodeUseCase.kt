@@ -3,8 +3,11 @@ package pro.devapp.currencyrates.usecases
 import pro.devapp.core.entities.EntityCurrency
 import pro.devapp.storage.repositories.CurrencyDetailsRepository
 
-class GetCurrencyByCodeUseCase(private val currencyDetailsRepository: CurrencyDetailsRepository) :
-    BaseUseCase<EntityCurrency, GetCurrencyByCodeUseCase.Params> {
+/**
+ * Create Currency entity by currency code and rate value
+ */
+class CreateCurrencyByCodeUseCase(private val currencyDetailsRepository: CurrencyDetailsRepository) :
+    BaseUseCase<EntityCurrency, CreateCurrencyByCodeUseCase.Params> {
     data class Params(val currencyCode: String, val currentValue: Double)
 
     override suspend fun run(params: Params): EntityCurrency {

@@ -9,8 +9,11 @@ import androidx.viewbinding.ViewBinding
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 
+/**
+ * Create view binding for fragment
+ */
 class FragmentViewBindingDelegate<T : ViewBinding>(
-    val fragment: Fragment,
+    private val fragment: Fragment,
     val viewBindingFactory: (LayoutInflater) -> T
 ) : ReadOnlyProperty<Fragment, T> {
     private var binding: T? = null

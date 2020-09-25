@@ -7,13 +7,13 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.*
 import pro.devapp.core.entities.EntityCurrency
 import pro.devapp.core.entities.ResultEntity
-import pro.devapp.currencyrates.usecases.GetCurrencyByCodeUseCase
+import pro.devapp.currencyrates.usecases.CreateCurrencyByCodeUseCase
 import pro.devapp.currencyrates.usecases.GetRatesListUseCase
 
 class RatesViewModel(
     application: Application,
     private val getRatesListUseCase: GetRatesListUseCase,
-    private val getCurrencyByCodeUseCase: GetCurrencyByCodeUseCase
+    private val createCurrencyByCodeUseCase: CreateCurrencyByCodeUseCase
 ) : AndroidViewModel(application) {
     companion object {
         const val DEFAULT_CURRENCY_CODE = "EUR"
@@ -29,8 +29,8 @@ class RatesViewModel(
     fun startRefreshList() {
         lastSelectedCurrency?.apply { loadData(this) } ?: run {
             viewModelScope.launch {
-                val params = GetCurrencyByCodeUseCase.Params(DEFAULT_CURRENCY_CODE, currentValue)
-                val selectedCurrency = getCurrencyByCodeUseCase.run(params)
+                val params = CreateCurrencyByCodeUseCase.Params(DEFAULT_CURRENCY_CODE, currentValue)
+                val selectedCurrency = createCurrencyByCodeUseCase.run(params)
                 lastSelectedCurrency = selectedCurrency
                 loadData(selectedCurrency)
             }

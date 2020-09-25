@@ -4,6 +4,9 @@ import pro.devapp.core.entities.EntityCurrency
 import pro.devapp.core.entities.ResultEntity
 import pro.devapp.storage.repositories.CurrencyRatesRepository
 
+/**
+ * Currency list
+ */
 class GetRatesListUseCase(private val currencyRatesRepository: CurrencyRatesRepository) :
     BaseUseCase<ResultEntity<List<EntityCurrency>>, GetRatesListUseCase.Params> {
     data class Params(val selectedCurrency: EntityCurrency, val currentValue: Double)

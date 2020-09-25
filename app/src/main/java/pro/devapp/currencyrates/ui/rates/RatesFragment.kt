@@ -11,10 +11,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import pro.devapp.currencyrates.databinding.FragmentRatesBinding
 import pro.devapp.currencyrates.ui.viewBinding
-import pro.devapp.currencyrates.usecases.GetCurrencyByCodeUseCase
+import pro.devapp.currencyrates.usecases.CreateCurrencyByCodeUseCase
 import pro.devapp.currencyrates.usecases.GetRatesListUseCase
-import pro.devapp.storage.getCurrencyDetailsRepository
-import pro.devapp.storage.getCurrencyRatesRepository
+import pro.devapp.storage.Storage
 
 class RatesFragment : Fragment() {
 
@@ -27,8 +26,8 @@ class RatesFragment : Fragment() {
             override fun <T : ViewModel?> create(modelClass: Class<T>): T {
                 return RatesViewModel(
                     requireActivity().application,
-                    GetRatesListUseCase(getCurrencyRatesRepository(requireActivity().applicationContext)),
-                    GetCurrencyByCodeUseCase(getCurrencyDetailsRepository(requireActivity().applicationContext))
+                    GetRatesListUseCase(Storage.getCurrencyRatesRepository(requireActivity().applicationContext)),
+                    CreateCurrencyByCodeUseCase(Storage.getCurrencyDetailsRepository(requireActivity().applicationContext))
                 ) as T
             }
         }
