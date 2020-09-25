@@ -1,0 +1,5 @@
+include ':core'
+include ':network'
+include ':storage'
+include ':app'
+rootProject.name = "Currency Rates"
