@@ -9,6 +9,8 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.CompositeDisposable
 import pro.devapp.currencyrates.databinding.FragmentRatesBinding
 import pro.devapp.currencyrates.ui.viewBinding
 import pro.devapp.currencyrates.usecases.GetCurrencyByCodeUseCase
@@ -35,31 +37,49 @@ class RatesFragment : Fragment() {
     }
 
     private val screenBinding by viewBinding(FragmentRatesBinding::inflate)
+    private val compositeDisposable = CompositeDisposable()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
 
-        screenBinding.currencyList.selectItemListener = {
+        screenBinding.currencyList.clickSubject.subscribe {
             viewModel.setSelectedCurrency(it)
+        }.also {
+            compositeDisposable.add(it)
         }
 
         screenBinding.currencyList.setTextListener {
             viewModel.setValue(it)
         }
 
-        viewModel.currencyList.observe(viewLifecycleOwner) {
-            screenBinding.currencyList.submitList(it)
-        }
-
-        viewModel.errorMessage.observe(viewLifecycleOwner) { message ->
-            message?.let {
-                Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
+        viewModel.currencyList
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe {
+                screenBinding.currencyList.submitList(it)
             }
-        }
+            .also {
+                compositeDisposable.add(it)
+            }
+
+        viewModel.errorMessage
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe { message ->
+                if (message.isNotEmpty()) {
+                    Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+                }
+            }
+            .also {
+                compositeDisposable.add(it)
+            }
 
         return screenBinding.root
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        compositeDisposable.clear()
     }
 
     override fun onStart() {

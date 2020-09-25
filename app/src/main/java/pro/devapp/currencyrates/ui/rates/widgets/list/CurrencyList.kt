@@ -5,13 +5,14 @@ import android.util.AttributeSet
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import io.reactivex.subjects.ReplaySubject
 import pro.devapp.core.entities.EntityCurrency
 
 class CurrencyList @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : RecyclerView(context, attrs, defStyleAttr) {
 
-    var selectItemListener: ((client: EntityCurrency) -> Unit)? = null
+    val clickSubject = ReplaySubject.create<EntityCurrency>()
 
     private var lastSelectedCurrency: EntityCurrency? = null
 
@@ -22,11 +23,9 @@ class CurrencyList @JvmOverloads constructor(
 
         addOnItemClickListener(object : OnItemClickListener {
             override fun onItemClicked(position: Int) {
-                selectItemListener?.apply {
-                    val item = (adapter as CurrencyAdapter).getItemByPosition(position)
-                    item?.let {
-                        this(it)
-                    }
+                val item = (adapter as CurrencyAdapter).getItemByPosition(position)
+                item?.let {
+                    clickSubject.onNext(it)
                 }
             }
         })

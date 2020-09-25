@@ -2,13 +2,13 @@ package pro.devapp.currencyrates.ui.rates
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.*
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.Disposable
+import io.reactivex.subjects.ReplaySubject
 import pro.devapp.core.entities.EntityCurrency
-import pro.devapp.core.entities.ResultEntity
 import pro.devapp.currencyrates.usecases.GetCurrencyByCodeUseCase
 import pro.devapp.currencyrates.usecases.GetRatesListUseCase
+import java.util.concurrent.TimeUnit
 
 class RatesViewModel(
     application: Application,
@@ -19,20 +19,18 @@ class RatesViewModel(
         const val DEFAULT_CURRENCY_CODE = "EUR"
     }
 
-    val currencyList = MutableLiveData<List<EntityCurrency>>()
-    val errorMessage = MutableLiveData<String?>()
+    val currencyList = ReplaySubject.createWithSize<List<EntityCurrency>>(1)
+    val errorMessage = ReplaySubject.create<String>()
 
-    private var loadDataJob: Job? = null
+    private var loadDataDisposable: Disposable? = null
     private var lastSelectedCurrency: EntityCurrency? = null
     private var currentValue = 1.00
 
     fun startRefreshList(selectedCurrencyCode: String) {
-        viewModelScope.launch {
-            val params = GetCurrencyByCodeUseCase.Params(selectedCurrencyCode, currentValue)
-            val selectedCurrency = getCurrencyByCodeUseCase.run(params)
-            lastSelectedCurrency = selectedCurrency
-            loadData(selectedCurrency)
-        }
+        val params = GetCurrencyByCodeUseCase.Params(selectedCurrencyCode, currentValue)
+        val selectedCurrency = getCurrencyByCodeUseCase.run(params)
+        lastSelectedCurrency = selectedCurrency
+        loadData(selectedCurrency)
     }
 
     fun setSelectedCurrency(selectedCurrency: EntityCurrency) {
@@ -43,14 +41,14 @@ class RatesViewModel(
     }
 
     fun stopRefreshList() {
-        loadDataJob?.cancelChildren()
+        loadDataDisposable?.dispose()
     }
 
     fun setValue(value: String) {
         val newValue = value.toDoubleOrNull()
         newValue?.let {
             if (newValue != currentValue) {
-                loadDataJob?.cancelChildren()
+                loadDataDisposable?.dispose()
 
                 currentValue = newValue
                 lastSelectedCurrency = lastSelectedCurrency?.run {
@@ -71,7 +69,7 @@ class RatesViewModel(
                         it
                     }
                 }?.let {
-                    currencyList.postValue(it)
+                    currencyList.onNext(it)
                 }
 
                 lastSelectedCurrency?.apply { loadData(this) }
@@ -84,22 +82,24 @@ class RatesViewModel(
      * If exception retry after 10s
      */
     private fun loadData(selectedCurrency: EntityCurrency) {
-        loadDataJob?.cancel()
-        loadDataJob = viewModelScope.launch {
-            while (isActive) {
-                val params = GetRatesListUseCase.Params(selectedCurrency, currentValue)
-                when (val result = getRatesListUseCase.run(params)) {
-                    is ResultEntity.Success -> {
-                        errorMessage.postValue(null)
-                        currencyList.postValue(result.value)
-                        delay(1000)
-                    }
-                    is ResultEntity.Error -> {
-                        errorMessage.postValue(result.cause?.message)
-                        delay(10000)
-                    }
-                }
+        loadDataDisposable?.dispose()
+        val params = GetRatesListUseCase.Params(selectedCurrency, currentValue)
+        loadDataDisposable = getRatesListUseCase
+            .run(params)
+            .observeOn(AndroidSchedulers.mainThread())
+            .doOnError {
+                errorMessage.onNext(it.message ?: "Error")
             }
-        }
+            .doOnSuccess {
+                errorMessage.onNext("")
+                currencyList.onNext(it)
+            }
+            .retryWhen {
+                it.delay(10, TimeUnit.SECONDS)
+            }
+            .repeatWhen {
+                it.delay(1, TimeUnit.SECONDS)
+            }
+            .subscribe()
     }
 }

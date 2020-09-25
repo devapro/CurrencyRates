@@ -1,11 +1,9 @@
 package pro.devapp.storage.repositories
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import io.reactivex.Single
+import io.reactivex.schedulers.Schedulers
 import pro.devapp.core.entities.EntityCurrency
-import pro.devapp.core.entities.ResultEntity
 import pro.devapp.network.api.ApiCurrencyRates
-import pro.devapp.network.exceptions.NetworkApiException
 import pro.devapp.storage.mappers.map
 
 class CurrencyRatesRepository(
@@ -13,15 +11,11 @@ class CurrencyRatesRepository(
     private val currencyDetailsRepository: CurrencyDetailsRepository
 ) {
 
-    suspend fun getCurrencyRates(baseCurrencyCode: String): ResultEntity<List<EntityCurrency>> {
-        return withContext(Dispatchers.IO) {
-            try {
-                val result = apiCurrencyRates.getCurrencyList(baseCurrencyCode)
-                ResultEntity.Success(result.map(currencyDetailsRepository))
-            } catch (e: Exception) {
-                val exception = NetworkApiException(e.message)
-                ResultEntity.Error(exception)
+    fun getCurrencyRates(baseCurrencyCode: String): Single<List<EntityCurrency>> {
+        return apiCurrencyRates.getCurrencyList(baseCurrencyCode)
+            .subscribeOn(Schedulers.io())
+            .map {
+                it.map(currencyDetailsRepository)
             }
-        }
     }
 }
