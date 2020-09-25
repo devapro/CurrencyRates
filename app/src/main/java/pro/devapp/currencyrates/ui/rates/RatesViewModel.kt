@@ -26,12 +26,14 @@ class RatesViewModel(
     private var lastSelectedCurrency: EntityCurrency? = null
     private var currentValue = 1.00
 
-    fun startRefreshList(selectedCurrencyCode: String) {
-        viewModelScope.launch {
-            val params = GetCurrencyByCodeUseCase.Params(selectedCurrencyCode, currentValue)
-            val selectedCurrency = getCurrencyByCodeUseCase.run(params)
-            lastSelectedCurrency = selectedCurrency
-            loadData(selectedCurrency)
+    fun startRefreshList() {
+        lastSelectedCurrency?.apply { loadData(this) } ?: run {
+            viewModelScope.launch {
+                val params = GetCurrencyByCodeUseCase.Params(DEFAULT_CURRENCY_CODE, currentValue)
+                val selectedCurrency = getCurrencyByCodeUseCase.run(params)
+                lastSelectedCurrency = selectedCurrency
+                loadData(selectedCurrency)
+            }
         }
     }
 
@@ -43,7 +45,7 @@ class RatesViewModel(
     }
 
     fun stopRefreshList() {
-        loadDataJob?.cancelChildren()
+        loadDataJob?.cancel()
     }
 
     fun setValue(value: String) {

@@ -48,7 +48,7 @@ class TestRatesViewModel {
         )
 
         viewModel.currencyList.observeForever(observerRatesList)
-        viewModel.startRefreshList(RatesViewModel.DEFAULT_CURRENCY_CODE)
+        viewModel.startRefreshList()
         Assert.assertTrue(
             "List currency isNotEmpty",
             viewModel.currencyList.getOrAwaitValue(5000, TimeUnit.MILLISECONDS).isNotEmpty()
@@ -67,7 +67,14 @@ class TestRatesViewModel {
         )
 
         viewModel.errorMessage.observeForever(observerErrorMessages)
-        viewModel.startRefreshList("InvalidCurrencyCode")
+        viewModel.setSelectedCurrency(
+            EntityCurrency(
+                "Invalid currency code",
+                "test",
+                null,
+                1.00
+            )
+        )
         Assert.assertTrue(
             "Error message isNotEmpty",
             viewModel.errorMessage.getOrAwaitValue(5000, TimeUnit.MILLISECONDS)
@@ -87,7 +94,7 @@ class TestRatesViewModel {
         )
 
         viewModel.currencyList.observeForever(observerRatesList)
-        viewModel.startRefreshList(RatesViewModel.DEFAULT_CURRENCY_CODE)
+        viewModel.startRefreshList()
         Assert.assertTrue(
             "List currency isNotEmpty",
             viewModel.currencyList.getOrAwaitValue(5000, TimeUnit.MILLISECONDS).isNotEmpty()
@@ -111,7 +118,7 @@ class TestRatesViewModel {
         )
 
         viewModel.currencyList.observeForever(observerRatesList)
-        viewModel.startRefreshList(RatesViewModel.DEFAULT_CURRENCY_CODE)
+        viewModel.startRefreshList()
         Assert.assertTrue(
             "List currency isNotEmpty",
             viewModel.currencyList.getOrAwaitValue(5000, TimeUnit.MILLISECONDS).isNotEmpty()
