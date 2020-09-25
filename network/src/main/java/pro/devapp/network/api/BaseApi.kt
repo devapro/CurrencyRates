@@ -1,32 +1,23 @@
 package pro.devapp.network.api
 
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.json.JSONObject
-import pro.devapp.network.BuildConfig
 import pro.devapp.network.ConnectionStateUtil
-import pro.devapp.network.entities.ApiEntityCurrency
 import pro.devapp.network.exceptions.InvalidApiResponseException
 import pro.devapp.network.exceptions.NetworkApiException
 import pro.devapp.network.exceptions.NotFoundApiException
 import pro.devapp.network.exceptions.ServerApiException
 
-
-class ApiCurrency(
+/**
+ * Class with common methods for making api requests
+ */
+open class BaseApi(
     private val httpClient: OkHttpClient,
     private val connectionStateUtil: ConnectionStateUtil
 ) {
-    fun getCurrencyList(currencyCode: String): List<ApiEntityCurrency> {
-        val urlBuilder = BuildConfig.urlApi.toHttpUrlOrNull()?.newBuilder()
-        urlBuilder?.addQueryParameter("base", currencyCode)
-        val url = urlBuilder?.build().toString()
-        val response = makeRequest(url)
-        return handleApiResponse(response)
-    }
-
-    private fun makeRequest(url: String): Response {
+    protected fun makeRequest(url: String): Response {
         try {
             val request = Request.Builder()
                 .url(url)
@@ -42,20 +33,15 @@ class ApiCurrency(
         }
     }
 
-    private fun handleApiResponse(response: Response): List<ApiEntityCurrency> {
+    protected fun <T> handleApiResponse(
+        response: Response,
+        resultParser: (jsonObject: JSONObject) -> T
+    ): T {
         if (response.isSuccessful) {
             val json = response.body?.string()
             return json?.let {
-                val currencyList = ArrayList<ApiEntityCurrency>()
                 val jsonObject = JSONObject(it)
-                val ratesObject = jsonObject.getJSONObject("rates")
-                ratesObject.keys().forEach { currencyCode ->
-                    val currencyRate = ratesObject.getDouble(currencyCode)
-                    currencyList.add(
-                        ApiEntityCurrency(currencyCode, currencyRate)
-                    )
-                }
-                return currencyList
+                return resultParser(jsonObject)
             } ?: throw InvalidApiResponseException()
         } else {
             val json = response.body?.string()
