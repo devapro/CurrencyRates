@@ -49,6 +49,10 @@ class RatesFragment : Fragment() {
         }
 
         viewModel.currencyList.observe(viewLifecycleOwner) {
+            if (screenBinding.progress.visibility != View.GONE) {
+                screenBinding.progress.visibility = View.GONE
+                screenBinding.currencyList.visibility = View.VISIBLE
+            }
             screenBinding.currencyList.submitList(it)
         }
 
