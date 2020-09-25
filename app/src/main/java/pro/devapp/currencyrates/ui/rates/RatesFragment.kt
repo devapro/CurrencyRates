@@ -84,7 +84,7 @@ class RatesFragment : Fragment() {
 
     override fun onStart() {
         super.onStart()
-        viewModel.startRefreshList(RatesViewModel.DEFAULT_CURRENCY_CODE)
+        viewModel.startRefreshList()
     }
 
     override fun onStop() {

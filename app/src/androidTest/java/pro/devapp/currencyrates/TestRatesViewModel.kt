@@ -5,7 +5,6 @@ import androidx.lifecycle.Observer
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.rule.ActivityTestRule
-import junit.framework.Assert
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -18,7 +17,6 @@ import pro.devapp.currencyrates.usecases.GetCurrencyByCodeUseCase
 import pro.devapp.currencyrates.usecases.GetRatesListUseCase
 import pro.devapp.storage.getCurrencyDetailsRepository
 import pro.devapp.storage.getCurrencyRatesRepository
-import java.util.concurrent.TimeUnit
 
 @RunWith(AndroidJUnit4::class)
 class TestRatesViewModel {
@@ -47,12 +45,12 @@ class TestRatesViewModel {
             GetCurrencyByCodeUseCase(getCurrencyDetailsRepository(appContext))
         )
 
-        viewModel.currencyList.observeForever(observerRatesList)
-        viewModel.startRefreshList(RatesViewModel.DEFAULT_CURRENCY_CODE)
-        Assert.assertTrue(
-            "List currency isNotEmpty",
-            viewModel.currencyList.getOrAwaitValue(5000, TimeUnit.MILLISECONDS).isNotEmpty()
-        )
+
+        viewModel.startRefreshList()
+        viewModel.currencyList
+            .test()
+            .awaitCount(1)
+            .assertValue { it.isNotEmpty() }
         viewModel.stopRefreshList()
     }
 
@@ -66,13 +64,16 @@ class TestRatesViewModel {
             GetCurrencyByCodeUseCase(getCurrencyDetailsRepository(appContext))
         )
 
-        viewModel.errorMessage.observeForever(observerErrorMessages)
-        viewModel.startRefreshList("InvalidCurrencyCode")
-        Assert.assertTrue(
-            "Error message isNotEmpty",
-            viewModel.errorMessage.getOrAwaitValue(5000, TimeUnit.MILLISECONDS)
-                ?.isNotEmpty() == true
+        viewModel.startRefreshList()
+        viewModel.setSelectedCurrency(
+            EntityCurrency(
+                "InvalidCode",
+                "test",
+                null,
+                0.00
+            )
         )
+        viewModel.errorMessage.test().awaitCount(1).assertValue { it.isNotEmpty() }
         viewModel.stopRefreshList()
     }
 
@@ -86,17 +87,16 @@ class TestRatesViewModel {
             GetCurrencyByCodeUseCase(getCurrencyDetailsRepository(appContext))
         )
 
-        viewModel.currencyList.observeForever(observerRatesList)
-        viewModel.startRefreshList(RatesViewModel.DEFAULT_CURRENCY_CODE)
-        Assert.assertTrue(
-            "List currency isNotEmpty",
-            viewModel.currencyList.getOrAwaitValue(5000, TimeUnit.MILLISECONDS).isNotEmpty()
-        )
+        viewModel.startRefreshList()
+        viewModel.currencyList
+            .test()
+            .awaitCount(1)
+            .assertValue { it.isNotEmpty() }
         viewModel.setValue("2")
-        Assert.assertTrue(
-            "List currency updated and isNotEmpty",
-            viewModel.currencyList.getOrAwaitValue(5000, TimeUnit.MILLISECONDS).isNotEmpty()
-        )
+        viewModel.currencyList
+            .test()
+            .awaitCount(1)
+            .assertValue { it.isNotEmpty() }
         viewModel.stopRefreshList()
     }
 
@@ -110,17 +110,16 @@ class TestRatesViewModel {
             GetCurrencyByCodeUseCase(getCurrencyDetailsRepository(appContext))
         )
 
-        viewModel.currencyList.observeForever(observerRatesList)
-        viewModel.startRefreshList(RatesViewModel.DEFAULT_CURRENCY_CODE)
-        Assert.assertTrue(
-            "List currency isNotEmpty",
-            viewModel.currencyList.getOrAwaitValue(5000, TimeUnit.MILLISECONDS).isNotEmpty()
-        )
+        viewModel.startRefreshList()
+        viewModel.currencyList
+            .test()
+            .awaitCount(1)
+            .assertValue { it.isNotEmpty() }
         viewModel.setValue("incorrect string")
-        Assert.assertTrue(
-            "List currency updated and isNotEmpty",
-            viewModel.currencyList.getOrAwaitValue(5000, TimeUnit.MILLISECONDS).isNotEmpty()
-        )
+        viewModel.currencyList
+            .test()
+            .awaitCount(1)
+            .assertValue { it.isNotEmpty() }
         viewModel.stopRefreshList()
     }
 
