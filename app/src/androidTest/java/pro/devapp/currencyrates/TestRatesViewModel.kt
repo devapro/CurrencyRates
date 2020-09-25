@@ -76,5 +76,53 @@ class TestRatesViewModel {
         viewModel.stopRefreshList()
     }
 
+    @Test
+    fun testRatesListCalculationUpdate() {
+        mainActivityTestRule.launchActivity(null)
+        val appContext = InstrumentationRegistry.getInstrumentation().targetContext
+        val viewModel = RatesViewModel(
+            mainActivityTestRule.activity.application,
+            GetRatesListUseCase(getCurrencyRatesRepository(appContext)),
+            GetCurrencyByCodeUseCase(getCurrencyDetailsRepository(appContext))
+        )
+
+        viewModel.currencyList.observeForever(observerRatesList)
+        viewModel.startRefreshList(RatesViewModel.DEFAULT_CURRENCY_CODE)
+        Assert.assertTrue(
+            "List currency isNotEmpty",
+            viewModel.currencyList.getOrAwaitValue(5000, TimeUnit.MILLISECONDS).isNotEmpty()
+        )
+        viewModel.setValue("2")
+        Assert.assertTrue(
+            "List currency updated and isNotEmpty",
+            viewModel.currencyList.getOrAwaitValue(5000, TimeUnit.MILLISECONDS).isNotEmpty()
+        )
+        viewModel.stopRefreshList()
+    }
+
+    @Test
+    fun testRatesListCalculationWithIncorrectValueUpdate() {
+        mainActivityTestRule.launchActivity(null)
+        val appContext = InstrumentationRegistry.getInstrumentation().targetContext
+        val viewModel = RatesViewModel(
+            mainActivityTestRule.activity.application,
+            GetRatesListUseCase(getCurrencyRatesRepository(appContext)),
+            GetCurrencyByCodeUseCase(getCurrencyDetailsRepository(appContext))
+        )
+
+        viewModel.currencyList.observeForever(observerRatesList)
+        viewModel.startRefreshList(RatesViewModel.DEFAULT_CURRENCY_CODE)
+        Assert.assertTrue(
+            "List currency isNotEmpty",
+            viewModel.currencyList.getOrAwaitValue(5000, TimeUnit.MILLISECONDS).isNotEmpty()
+        )
+        viewModel.setValue("incorrect string")
+        Assert.assertTrue(
+            "List currency updated and isNotEmpty",
+            viewModel.currencyList.getOrAwaitValue(5000, TimeUnit.MILLISECONDS).isNotEmpty()
+        )
+        viewModel.stopRefreshList()
+    }
+
 
 }
