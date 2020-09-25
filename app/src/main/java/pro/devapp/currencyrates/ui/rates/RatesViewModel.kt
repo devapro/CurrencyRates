@@ -6,6 +6,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.*
 import pro.devapp.core.entities.EntityCurrency
+import pro.devapp.core.entities.ResultEntity
 import pro.devapp.currencyrates.usecases.GetCurrencyByCodeUseCase
 import pro.devapp.currencyrates.usecases.GetRatesListUseCase
 
@@ -87,14 +88,16 @@ class RatesViewModel(
         loadDataJob = viewModelScope.launch {
             while (isActive) {
                 val params = GetRatesListUseCase.Params(selectedCurrency, currentValue)
-                val result = getRatesListUseCase.run(params)
-                result.getOrNull()?.let { currencyRates ->
-                    errorMessage.postValue(null)
-                    currencyList.postValue(currencyRates)
-                    delay(1000)
-                } ?: run {
-                    errorMessage.postValue(result.exceptionOrNull()?.message)
-                    delay(10000)
+                when (val result = getRatesListUseCase.run(params)) {
+                    is ResultEntity.Success -> {
+                        errorMessage.postValue(null)
+                        currencyList.postValue(result.value)
+                        delay(1000)
+                    }
+                    is ResultEntity.Error -> {
+                        errorMessage.postValue(result.cause?.message)
+                        delay(10000)
+                    }
                 }
             }
         }

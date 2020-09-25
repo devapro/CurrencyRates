@@ -18,7 +18,7 @@ class ApiCurrency(
     private val httpClient: OkHttpClient,
     private val connectionStateUtil: ConnectionStateUtil
 ) {
-    fun getCurrencyList(currencyCode: String): Result<List<ApiEntityCurrency>> {
+    fun getCurrencyList(currencyCode: String): List<ApiEntityCurrency> {
         val urlBuilder = BuildConfig.urlApi.toHttpUrlOrNull()?.newBuilder()
         urlBuilder?.addQueryParameter("base", currencyCode)
         val url = urlBuilder?.build().toString()
@@ -42,7 +42,7 @@ class ApiCurrency(
         }
     }
 
-    private fun handleApiResponse(response: Response): Result<List<ApiEntityCurrency>> {
+    private fun handleApiResponse(response: Response): List<ApiEntityCurrency> {
         if (response.isSuccessful) {
             val json = response.body?.string()
             return json?.let {
@@ -55,26 +55,20 @@ class ApiCurrency(
                         ApiEntityCurrency(currencyCode, currencyRate)
                     )
                 }
-                return Result.success(currencyList)
-            } ?: Result.failure(InvalidApiResponseException())
+                return currencyList
+            } ?: throw InvalidApiResponseException()
         } else {
             val json = response.body?.string()
             return json?.let {
                 when (response.code) {
                     in 400..450 -> {
-                        Result.failure(
-                            NotFoundApiException(it)
-                        )
+                        throw NotFoundApiException(it)
                     }
                     else -> {
-                        Result.failure(
-                            ServerApiException(it)
-                        )
+                        throw ServerApiException(it)
                     }
                 }
-            } ?: Result.failure(
-                ServerApiException(response.message)
-            )
+            } ?: throw ServerApiException(response.message)
         }
     }
 }
