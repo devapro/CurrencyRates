@@ -63,6 +63,17 @@ class RatesFragment : Fragment() {
                 compositeDisposable.add(it)
             }
 
+        viewModel.currencyList
+            .observeOn(AndroidSchedulers.mainThread())
+            .firstElement()
+            .subscribe {
+                screenBinding.currencyList.visibility = View.VISIBLE
+                screenBinding.progress.visibility = View.GONE
+            }
+            .also {
+                compositeDisposable.add(it)
+            }
+
         viewModel.errorMessage
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe { message ->
