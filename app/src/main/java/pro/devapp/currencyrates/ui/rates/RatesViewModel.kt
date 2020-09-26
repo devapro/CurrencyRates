@@ -49,33 +49,33 @@ class RatesViewModel(
     }
 
     fun setValue(value: String) {
-        val newValue = value.toDoubleOrNull()
-        newValue?.let {
-            if (newValue != currentValue) {
-                loadDataJob?.cancelChildren()
+        val newValue = value.toDoubleOrNull() ?: 0.00
+        if (newValue != currentValue) {
+            loadDataJob?.cancelChildren()
 
-                currentValue = newValue
+            currentValue = newValue
+
+            currencyList.value?.map { itemCurrency ->
+                if (itemCurrency.code != lastSelectedCurrency?.code) {
+                    EntityCurrency(
+                        itemCurrency.code,
+                        itemCurrency.name,
+                        itemCurrency.flag,
+                        itemCurrency.rate * currentValue
+                    )
+                } else {
+                    itemCurrency
+                }
+            }?.let { updatedList ->
+                currencyList.postValue(updatedList)
+            }
+
+            if (currentValue > 0) {
                 lastSelectedCurrency = lastSelectedCurrency?.run {
                     EntityCurrency(
                         code, name, flag, currentValue
                     )
                 }
-
-                currencyList.value?.map {
-                    if (it.code != lastSelectedCurrency?.code) {
-                        EntityCurrency(
-                            it.code,
-                            it.name,
-                            it.flag,
-                            it.rate * currentValue
-                        )
-                    } else {
-                        it
-                    }
-                }?.let {
-                    currencyList.postValue(it)
-                }
-
                 lastSelectedCurrency?.apply { loadData(this) }
             }
         }
