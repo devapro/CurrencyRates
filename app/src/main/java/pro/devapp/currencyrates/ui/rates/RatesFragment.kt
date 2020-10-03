@@ -21,6 +21,7 @@ import pro.devapp.storage.getCurrencyRatesRepository
 class RatesFragment : Fragment() {
 
     companion object {
+        const val TAG = "RatesFragment"
         fun newInstance() = RatesFragment()
     }
 
