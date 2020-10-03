@@ -11,10 +11,11 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        supportFragmentManager
-            .beginTransaction()
-            .add(R.id.container, RatesFragment.newInstance())
-            .commit()
-
+        if (supportFragmentManager.findFragmentByTag(RatesFragment.TAG) == null) {
+            supportFragmentManager
+                .beginTransaction()
+                .add(R.id.container, RatesFragment.newInstance(), RatesFragment.TAG)
+                .commit()
+        }
     }
 }

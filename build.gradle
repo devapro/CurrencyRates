@@ -12,7 +12,7 @@ buildscript {
     ext.koin_version = "2.1.5"
     ext.multidex_version = "2.0.1"
 
-    ext.url = 'https://hiring.revolut.codes/api/android/latest'
+    ext.url = 'https://api.exchangeratesapi.io/latest'
 
     repositories {
         google()

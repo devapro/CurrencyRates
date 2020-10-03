@@ -19,6 +19,7 @@ class CurrencyList @JvmOverloads constructor(
         layoutManager = LinearLayoutManager(context, VERTICAL, false)
         itemAnimator = DefaultItemAnimator()
         adapter = CurrencyAdapter()
+        setHasFixedSize(true)
 
         addOnItemClickListener(object : OnItemClickListener {
             override fun onItemClicked(position: Int) {
@@ -30,6 +31,8 @@ class CurrencyList @JvmOverloads constructor(
                 }
             }
         })
+
+        setItemViewCacheSize(40)
     }
 
     fun submitList(currencyList: List<EntityCurrency>) {

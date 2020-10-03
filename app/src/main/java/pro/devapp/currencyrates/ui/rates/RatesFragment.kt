@@ -18,6 +18,8 @@ import pro.devapp.storage.Storage
 class RatesFragment : Fragment() {
 
     companion object {
+        const val TAG = "RatesFragment"
+
         fun newInstance() = RatesFragment()
     }
 
