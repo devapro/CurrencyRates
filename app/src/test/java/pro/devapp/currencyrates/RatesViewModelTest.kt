@@ -1,48 +1,62 @@
 package pro.devapp.currencyrates
 
 import android.app.Application
+import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import io.reactivex.Single
 import io.reactivex.android.plugins.RxAndroidPlugins
 import io.reactivex.plugins.RxJavaPlugins
 import io.reactivex.schedulers.Schedulers
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito
 import org.mockito.MockitoAnnotations
 import pro.devapp.core.entities.EntityCurrency
+import pro.devapp.currencyrates.data.getDefaultCurrencyEntity
 import pro.devapp.currencyrates.ui.rates.RatesViewModel
 import pro.devapp.currencyrates.usecases.CreateCurrencyByCodeUseCase
-import pro.devapp.currencyrates.usecases.GetRatesListUseCase
+import pro.devapp.currencyrates.usecases.LoadRatesListUseCase
+import pro.devapp.currencyrates.utils.RxImmediateSchedulerRule
 import pro.devapp.storage.repositories.CurrencyRatesRepository
 
 class RatesViewModelTest {
+
+    @Rule
+    @JvmField
+    val instantExecutorRule = InstantTaskExecutorRule()
+
+    @Rule
+    @JvmField
+    var testSchedulerRule = RxImmediateSchedulerRule()
 
     @Mock
     lateinit var getCurrencyByCodeUseCase: CreateCurrencyByCodeUseCase
 
     @Mock
-    lateinit var currencyRatesRepository: CurrencyRatesRepository
+    lateinit var loadRatesListUseCase: LoadRatesListUseCase
 
     @Mock
     lateinit var application: Application
 
-    private val currency = EntityCurrency(RatesViewModel.DEFAULT_CURRENCY_CODE, "", null, 0.00)
+    private val currency = getDefaultCurrencyEntity()
+
+    private lateinit var viewModel: RatesViewModel
 
     @Before
     fun setUp() {
         MockitoAnnotations.initMocks(this)
         RxAndroidPlugins.setInitMainThreadSchedulerHandler { Schedulers.trampoline() }
         RxJavaPlugins.setIoSchedulerHandler { Schedulers.trampoline() }
+
+        viewModel = RatesViewModel(application, loadRatesListUseCase, getCurrencyByCodeUseCase)
     }
 
     @Test
     fun getCurrencyList() {
         Mockito
             .`when`(currencyRatesRepository.getCurrencyRates(RatesViewModel.DEFAULT_CURRENCY_CODE))
-            .thenReturn(Single.just<List<EntityCurrency>>(listOf(currency)))
-        val getRatesListUseCase = GetRatesListUseCase(currencyRatesRepository)
-        val viewModel = RatesViewModel(application, getRatesListUseCase, getCurrencyByCodeUseCase)
+            .thenReturn(Single.just(listOf(currency)))
 
         viewModel.currencyList.onNext(listOf(currency))
 
@@ -63,7 +77,7 @@ class RatesViewModelTest {
             .`when`(currencyRatesRepository.getCurrencyRates(RatesViewModel.DEFAULT_CURRENCY_CODE))
             .thenReturn(Single.error(testException))
 
-        val getRatesListUseCase = GetRatesListUseCase(currencyRatesRepository)
+        val getRatesListUseCase = LoadRatesListUseCase(currencyRatesRepository)
 
         val viewModel = RatesViewModel(application, getRatesListUseCase, getCurrencyByCodeUseCase)
         viewModel.setSelectedCurrency(currency)
@@ -110,7 +124,7 @@ class RatesViewModelTest {
             )
             .thenReturn(currency)
 
-        val getRatesListUseCase = GetRatesListUseCase(currencyRatesRepository)
+        val getRatesListUseCase = LoadRatesListUseCase(currencyRatesRepository)
 
         val viewModel = RatesViewModel(application, getRatesListUseCase, getCurrencyByCodeUseCase)
         viewModel.startRefreshList()
@@ -136,7 +150,7 @@ class RatesViewModelTest {
             .`when`(currencyRatesRepository.getCurrencyRates(RatesViewModel.DEFAULT_CURRENCY_CODE))
             .thenReturn(Single.just<List<EntityCurrency>>(listOf(currency)))
 
-        val getRatesListUseCase = GetRatesListUseCase(currencyRatesRepository)
+        val getRatesListUseCase = LoadRatesListUseCase(currencyRatesRepository)
 
         val viewModel = RatesViewModel(application, getRatesListUseCase, getCurrencyByCodeUseCase)
         viewModel.setSelectedCurrency(currency)
@@ -173,7 +187,7 @@ class RatesViewModelTest {
             )
             .thenReturn(currency)
 
-        val getRatesListUseCase = GetRatesListUseCase(currencyRatesRepository)
+        val getRatesListUseCase = LoadRatesListUseCase(currencyRatesRepository)
 
         val viewModel = RatesViewModel(application, getRatesListUseCase, getCurrencyByCodeUseCase)
         viewModel.startRefreshList()
@@ -217,7 +231,7 @@ class RatesViewModelTest {
             )
             .thenReturn(currency)
 
-        val getRatesListUseCase = GetRatesListUseCase(currencyRatesRepository)
+        val getRatesListUseCase = LoadRatesListUseCase(currencyRatesRepository)
 
         val viewModel = RatesViewModel(application, getRatesListUseCase, getCurrencyByCodeUseCase)
         viewModel.startRefreshList()

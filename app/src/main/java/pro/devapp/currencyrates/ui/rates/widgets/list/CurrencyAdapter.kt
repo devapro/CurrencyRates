@@ -5,6 +5,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import pro.devapp.core.entities.EntityCurrency
+import pro.devapp.currencyrates.ui.rates.data.CurrencyDiffUtils
 
 class CurrencyAdapter : RecyclerView.Adapter<CurrencyViewHolder>() {
     private val items = ArrayList<ListItem>()

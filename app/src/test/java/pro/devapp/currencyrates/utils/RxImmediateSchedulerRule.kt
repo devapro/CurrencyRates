@@ -1,4 +1,4 @@
-package pro.devapp.currencyrates
+package pro.devapp.currencyrates.utils
 
 import io.reactivex.Scheduler
 import io.reactivex.android.plugins.RxAndroidPlugins

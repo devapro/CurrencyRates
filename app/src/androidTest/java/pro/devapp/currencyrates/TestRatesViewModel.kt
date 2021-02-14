@@ -14,7 +14,7 @@ import pro.devapp.core.entities.EntityCurrency
 import pro.devapp.currencyrates.ui.MainActivity
 import pro.devapp.currencyrates.ui.rates.RatesViewModel
 import pro.devapp.currencyrates.usecases.CreateCurrencyByCodeUseCase
-import pro.devapp.currencyrates.usecases.GetRatesListUseCase
+import pro.devapp.currencyrates.usecases.LoadRatesListUseCase
 import pro.devapp.storage.Storage.getCurrencyDetailsRepository
 import pro.devapp.storage.Storage.getCurrencyRatesRepository
 
@@ -41,7 +41,7 @@ class TestRatesViewModel {
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
         val viewModel = RatesViewModel(
             mainActivityTestRule.activity.application,
-            GetRatesListUseCase(getCurrencyRatesRepository(appContext)),
+            LoadRatesListUseCase(getCurrencyRatesRepository(appContext)),
             CreateCurrencyByCodeUseCase(getCurrencyDetailsRepository(appContext))
         )
 
@@ -60,7 +60,7 @@ class TestRatesViewModel {
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
         val viewModel = RatesViewModel(
             mainActivityTestRule.activity.application,
-            GetRatesListUseCase(getCurrencyRatesRepository(appContext)),
+            LoadRatesListUseCase(getCurrencyRatesRepository(appContext)),
             CreateCurrencyByCodeUseCase(getCurrencyDetailsRepository(appContext))
         )
 
@@ -83,7 +83,7 @@ class TestRatesViewModel {
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
         val viewModel = RatesViewModel(
             mainActivityTestRule.activity.application,
-            GetRatesListUseCase(getCurrencyRatesRepository(appContext)),
+            LoadRatesListUseCase(getCurrencyRatesRepository(appContext)),
             CreateCurrencyByCodeUseCase(getCurrencyDetailsRepository(appContext))
         )
 
@@ -106,7 +106,7 @@ class TestRatesViewModel {
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
         val viewModel = RatesViewModel(
             mainActivityTestRule.activity.application,
-            GetRatesListUseCase(getCurrencyRatesRepository(appContext)),
+            LoadRatesListUseCase(getCurrencyRatesRepository(appContext)),
             CreateCurrencyByCodeUseCase(getCurrencyDetailsRepository(appContext))
         )
 

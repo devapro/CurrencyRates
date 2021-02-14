@@ -4,28 +4,25 @@ import io.reactivex.Single
 import pro.devapp.core.entities.EntityCurrency
 import pro.devapp.storage.repositories.CurrencyRatesRepository
 
-/**
- * Currency list
- */
 class GetRatesListUseCase(private val currencyRatesRepository: CurrencyRatesRepository) :
     BaseUseCase<Single<List<EntityCurrency>>, GetRatesListUseCase.Params> {
     data class Params(val selectedCurrency: EntityCurrency, val currentValue: Double)
 
     override fun run(params: Params): Single<List<EntityCurrency>> {
-        return currencyRatesRepository.getCurrencyRates(params.selectedCurrency.code)
-            .map { result ->
-                val fullList = result.map {
-                    EntityCurrency(
-                        it.code,
-                        it.name,
-                        it.flag,
-                        it.rate * params.currentValue
-                    )
-                }.toMutableList()
-                fullList.reverse()
-                fullList.add(params.selectedCurrency)
-                fullList.reverse()
-                fullList
-            }
+        return Single.create {
+            val result = currencyRatesRepository.getLastLoadedCurrencyRates()
+            val fullList = result.map { item ->
+                EntityCurrency(
+                    item.code,
+                    item.name,
+                    item.flag,
+                    item.rate * params.currentValue
+                )
+            }.toMutableList()
+            fullList.reverse()
+            fullList.add(params.selectedCurrency)
+            fullList.reverse()
+            it.onSuccess(fullList)
+        }
     }
 }
