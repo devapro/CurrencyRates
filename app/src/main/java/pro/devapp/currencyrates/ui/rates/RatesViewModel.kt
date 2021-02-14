@@ -6,14 +6,14 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.subjects.ReplaySubject
 import pro.devapp.core.entities.EntityCurrency
-import pro.devapp.currencyrates.usecases.GetCurrencyByCodeUseCase
+import pro.devapp.currencyrates.usecases.CreateCurrencyByCodeUseCase
 import pro.devapp.currencyrates.usecases.GetRatesListUseCase
 import java.util.concurrent.TimeUnit
 
 class RatesViewModel(
     application: Application,
     private val getRatesListUseCase: GetRatesListUseCase,
-    private val getCurrencyByCodeUseCase: GetCurrencyByCodeUseCase
+    private val getCurrencyByCodeUseCase: CreateCurrencyByCodeUseCase
 ) : AndroidViewModel(application) {
     companion object {
         const val DEFAULT_CURRENCY_CODE = "EUR"
@@ -28,7 +28,7 @@ class RatesViewModel(
 
     fun startRefreshList() {
         lastSelectedCurrency?.apply { loadData(this) } ?: run {
-            val params = GetCurrencyByCodeUseCase.Params(DEFAULT_CURRENCY_CODE, currentValue)
+            val params = CreateCurrencyByCodeUseCase.Params(DEFAULT_CURRENCY_CODE, currentValue)
             val selectedCurrency = getCurrencyByCodeUseCase.run(params)
             lastSelectedCurrency = selectedCurrency
             loadData(selectedCurrency)

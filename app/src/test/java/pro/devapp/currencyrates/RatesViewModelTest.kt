@@ -12,14 +12,14 @@ import org.mockito.Mockito
 import org.mockito.MockitoAnnotations
 import pro.devapp.core.entities.EntityCurrency
 import pro.devapp.currencyrates.ui.rates.RatesViewModel
-import pro.devapp.currencyrates.usecases.GetCurrencyByCodeUseCase
+import pro.devapp.currencyrates.usecases.CreateCurrencyByCodeUseCase
 import pro.devapp.currencyrates.usecases.GetRatesListUseCase
 import pro.devapp.storage.repositories.CurrencyRatesRepository
 
 class RatesViewModelTest {
 
     @Mock
-    lateinit var getCurrencyByCodeUseCase: GetCurrencyByCodeUseCase
+    lateinit var getCurrencyByCodeUseCase: CreateCurrencyByCodeUseCase
 
     @Mock
     lateinit var currencyRatesRepository: CurrencyRatesRepository
@@ -102,7 +102,7 @@ class RatesViewModelTest {
         Mockito
             .`when`(
                 getCurrencyByCodeUseCase.run(
-                    GetCurrencyByCodeUseCase.Params(
+                    CreateCurrencyByCodeUseCase.Params(
                         RatesViewModel.DEFAULT_CURRENCY_CODE,
                         1.00
                     )
@@ -165,7 +165,7 @@ class RatesViewModelTest {
         Mockito
             .`when`(
                 getCurrencyByCodeUseCase.run(
-                    GetCurrencyByCodeUseCase.Params(
+                    CreateCurrencyByCodeUseCase.Params(
                         RatesViewModel.DEFAULT_CURRENCY_CODE,
                         1.00
                     )
@@ -209,7 +209,7 @@ class RatesViewModelTest {
         Mockito
             .`when`(
                 getCurrencyByCodeUseCase.run(
-                    GetCurrencyByCodeUseCase.Params(
+                    CreateCurrencyByCodeUseCase.Params(
                         RatesViewModel.DEFAULT_CURRENCY_CODE,
                         1.00
                     )

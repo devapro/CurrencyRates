@@ -13,10 +13,10 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import pro.devapp.currencyrates.databinding.FragmentRatesBinding
 import pro.devapp.currencyrates.ui.viewBinding
-import pro.devapp.currencyrates.usecases.GetCurrencyByCodeUseCase
+import pro.devapp.currencyrates.usecases.CreateCurrencyByCodeUseCase
 import pro.devapp.currencyrates.usecases.GetRatesListUseCase
-import pro.devapp.storage.getCurrencyDetailsRepository
-import pro.devapp.storage.getCurrencyRatesRepository
+import pro.devapp.storage.Storage.getCurrencyDetailsRepository
+import pro.devapp.storage.Storage.getCurrencyRatesRepository
 
 class RatesFragment : Fragment() {
 
@@ -31,7 +31,7 @@ class RatesFragment : Fragment() {
                 return RatesViewModel(
                     requireActivity().application,
                     GetRatesListUseCase(getCurrencyRatesRepository(requireActivity().applicationContext)),
-                    GetCurrencyByCodeUseCase(getCurrencyDetailsRepository(requireActivity().applicationContext))
+                    CreateCurrencyByCodeUseCase(getCurrencyDetailsRepository(requireActivity().applicationContext))
                 ) as T
             }
         }
@@ -96,7 +96,7 @@ class RatesFragment : Fragment() {
 
     override fun onStart() {
         super.onStart()
-        viewModel.startRefreshList(RatesViewModel.DEFAULT_CURRENCY_CODE)
+        viewModel.startRefreshList()
     }
 
     override fun onStop() {

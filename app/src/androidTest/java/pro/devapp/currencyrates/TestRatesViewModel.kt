@@ -13,10 +13,10 @@ import org.mockito.MockitoAnnotations
 import pro.devapp.core.entities.EntityCurrency
 import pro.devapp.currencyrates.ui.MainActivity
 import pro.devapp.currencyrates.ui.rates.RatesViewModel
-import pro.devapp.currencyrates.usecases.GetCurrencyByCodeUseCase
+import pro.devapp.currencyrates.usecases.CreateCurrencyByCodeUseCase
 import pro.devapp.currencyrates.usecases.GetRatesListUseCase
-import pro.devapp.storage.getCurrencyDetailsRepository
-import pro.devapp.storage.getCurrencyRatesRepository
+import pro.devapp.storage.Storage.getCurrencyDetailsRepository
+import pro.devapp.storage.Storage.getCurrencyRatesRepository
 
 @RunWith(AndroidJUnit4::class)
 class TestRatesViewModel {
@@ -42,7 +42,7 @@ class TestRatesViewModel {
         val viewModel = RatesViewModel(
             mainActivityTestRule.activity.application,
             GetRatesListUseCase(getCurrencyRatesRepository(appContext)),
-            GetCurrencyByCodeUseCase(getCurrencyDetailsRepository(appContext))
+            CreateCurrencyByCodeUseCase(getCurrencyDetailsRepository(appContext))
         )
 
 
@@ -61,7 +61,7 @@ class TestRatesViewModel {
         val viewModel = RatesViewModel(
             mainActivityTestRule.activity.application,
             GetRatesListUseCase(getCurrencyRatesRepository(appContext)),
-            GetCurrencyByCodeUseCase(getCurrencyDetailsRepository(appContext))
+            CreateCurrencyByCodeUseCase(getCurrencyDetailsRepository(appContext))
         )
 
         viewModel.startRefreshList()
@@ -84,7 +84,7 @@ class TestRatesViewModel {
         val viewModel = RatesViewModel(
             mainActivityTestRule.activity.application,
             GetRatesListUseCase(getCurrencyRatesRepository(appContext)),
-            GetCurrencyByCodeUseCase(getCurrencyDetailsRepository(appContext))
+            CreateCurrencyByCodeUseCase(getCurrencyDetailsRepository(appContext))
         )
 
         viewModel.startRefreshList()
@@ -107,7 +107,7 @@ class TestRatesViewModel {
         val viewModel = RatesViewModel(
             mainActivityTestRule.activity.application,
             GetRatesListUseCase(getCurrencyRatesRepository(appContext)),
-            GetCurrencyByCodeUseCase(getCurrencyDetailsRepository(appContext))
+            CreateCurrencyByCodeUseCase(getCurrencyDetailsRepository(appContext))
         )
 
         viewModel.startRefreshList()
