@@ -5,7 +5,6 @@ import androidx.lifecycle.Observer
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.rule.ActivityTestRule
-import junit.framework.Assert
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -14,10 +13,10 @@ import org.mockito.MockitoAnnotations
 import pro.devapp.core.entities.EntityCurrency
 import pro.devapp.currencyrates.ui.MainActivity
 import pro.devapp.currencyrates.ui.rates.RatesViewModel
-import pro.devapp.currencyrates.usecases.CreateCurrencyByCodeUseCase
+import pro.devapp.currencyrates.usecases.GetCurrencyByCodeUseCase
 import pro.devapp.currencyrates.usecases.GetRatesListUseCase
-import pro.devapp.storage.Storage
-import java.util.concurrent.TimeUnit
+import pro.devapp.storage.getCurrencyDetailsRepository
+import pro.devapp.storage.getCurrencyRatesRepository
 
 @RunWith(AndroidJUnit4::class)
 class TestRatesViewModel {
@@ -42,16 +41,16 @@ class TestRatesViewModel {
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
         val viewModel = RatesViewModel(
             mainActivityTestRule.activity.application,
-            GetRatesListUseCase(Storage.getCurrencyRatesRepository(appContext)),
-            CreateCurrencyByCodeUseCase(Storage.getCurrencyDetailsRepository(appContext))
+            GetRatesListUseCase(getCurrencyRatesRepository(appContext)),
+            GetCurrencyByCodeUseCase(getCurrencyDetailsRepository(appContext))
         )
 
-        viewModel.currencyList.observeForever(observerRatesList)
+
         viewModel.startRefreshList()
-        Assert.assertTrue(
-            "List currency isNotEmpty",
-            viewModel.currencyList.getOrAwaitValue(5000, TimeUnit.MILLISECONDS).isNotEmpty()
-        )
+        viewModel.currencyList
+            .test()
+            .awaitCount(1)
+            .assertValue { it.isNotEmpty() }
         viewModel.stopRefreshList()
     }
 
@@ -61,24 +60,20 @@ class TestRatesViewModel {
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
         val viewModel = RatesViewModel(
             mainActivityTestRule.activity.application,
-            GetRatesListUseCase(Storage.getCurrencyRatesRepository(appContext)),
-            CreateCurrencyByCodeUseCase(Storage.getCurrencyDetailsRepository(appContext))
+            GetRatesListUseCase(getCurrencyRatesRepository(appContext)),
+            GetCurrencyByCodeUseCase(getCurrencyDetailsRepository(appContext))
         )
 
-        viewModel.errorMessage.observeForever(observerErrorMessages)
+        viewModel.startRefreshList()
         viewModel.setSelectedCurrency(
             EntityCurrency(
-                "Invalid currency code",
+                "InvalidCode",
                 "test",
                 null,
-                1.00
+                0.00
             )
         )
-        Assert.assertTrue(
-            "Error message isNotEmpty",
-            viewModel.errorMessage.getOrAwaitValue(5000, TimeUnit.MILLISECONDS)
-                ?.isNotEmpty() == true
-        )
+        viewModel.errorMessage.test().awaitCount(1).assertValue { it.isNotEmpty() }
         viewModel.stopRefreshList()
     }
 
@@ -88,21 +83,20 @@ class TestRatesViewModel {
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
         val viewModel = RatesViewModel(
             mainActivityTestRule.activity.application,
-            GetRatesListUseCase(Storage.getCurrencyRatesRepository(appContext)),
-            CreateCurrencyByCodeUseCase(Storage.getCurrencyDetailsRepository(appContext))
+            GetRatesListUseCase(getCurrencyRatesRepository(appContext)),
+            GetCurrencyByCodeUseCase(getCurrencyDetailsRepository(appContext))
         )
 
-        viewModel.currencyList.observeForever(observerRatesList)
         viewModel.startRefreshList()
-        Assert.assertTrue(
-            "List currency isNotEmpty",
-            viewModel.currencyList.getOrAwaitValue(5000, TimeUnit.MILLISECONDS).isNotEmpty()
-        )
+        viewModel.currencyList
+            .test()
+            .awaitCount(1)
+            .assertValue { it.isNotEmpty() }
         viewModel.setValue("2")
-        Assert.assertTrue(
-            "List currency updated and isNotEmpty",
-            viewModel.currencyList.getOrAwaitValue(5000, TimeUnit.MILLISECONDS).isNotEmpty()
-        )
+        viewModel.currencyList
+            .test()
+            .awaitCount(1)
+            .assertValue { it.isNotEmpty() }
         viewModel.stopRefreshList()
     }
 
@@ -112,21 +106,20 @@ class TestRatesViewModel {
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
         val viewModel = RatesViewModel(
             mainActivityTestRule.activity.application,
-            GetRatesListUseCase(Storage.getCurrencyRatesRepository(appContext)),
-            CreateCurrencyByCodeUseCase(Storage.getCurrencyDetailsRepository(appContext))
+            GetRatesListUseCase(getCurrencyRatesRepository(appContext)),
+            GetCurrencyByCodeUseCase(getCurrencyDetailsRepository(appContext))
         )
 
-        viewModel.currencyList.observeForever(observerRatesList)
         viewModel.startRefreshList()
-        Assert.assertTrue(
-            "List currency isNotEmpty",
-            viewModel.currencyList.getOrAwaitValue(5000, TimeUnit.MILLISECONDS).isNotEmpty()
-        )
+        viewModel.currencyList
+            .test()
+            .awaitCount(1)
+            .assertValue { it.isNotEmpty() }
         viewModel.setValue("incorrect string")
-        Assert.assertTrue(
-            "List currency updated and isNotEmpty",
-            viewModel.currencyList.getOrAwaitValue(5000, TimeUnit.MILLISECONDS).isNotEmpty()
-        )
+        viewModel.currencyList
+            .test()
+            .awaitCount(1)
+            .assertValue { it.isNotEmpty() }
         viewModel.stopRefreshList()
     }
 

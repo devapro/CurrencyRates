@@ -2,38 +2,36 @@ package pro.devapp.currencyrates.ui.rates
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.*
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.Disposable
+import io.reactivex.subjects.ReplaySubject
 import pro.devapp.core.entities.EntityCurrency
-import pro.devapp.core.entities.ResultEntity
-import pro.devapp.currencyrates.usecases.CreateCurrencyByCodeUseCase
+import pro.devapp.currencyrates.usecases.GetCurrencyByCodeUseCase
 import pro.devapp.currencyrates.usecases.GetRatesListUseCase
+import java.util.concurrent.TimeUnit
 
 class RatesViewModel(
     application: Application,
     private val getRatesListUseCase: GetRatesListUseCase,
-    private val createCurrencyByCodeUseCase: CreateCurrencyByCodeUseCase
+    private val getCurrencyByCodeUseCase: GetCurrencyByCodeUseCase
 ) : AndroidViewModel(application) {
     companion object {
         const val DEFAULT_CURRENCY_CODE = "EUR"
     }
 
-    val currencyList = MutableLiveData<List<EntityCurrency>>()
-    val errorMessage = MutableLiveData<String?>()
+    val currencyList = ReplaySubject.createWithSize<List<EntityCurrency>>(1)
+    val errorMessage = ReplaySubject.create<String>()
 
-    private var loadDataJob: Job? = null
+    private var loadDataDisposable: Disposable? = null
     private var lastSelectedCurrency: EntityCurrency? = null
     private var currentValue = 1.00
 
     fun startRefreshList() {
         lastSelectedCurrency?.apply { loadData(this) } ?: run {
-            viewModelScope.launch {
-                val params = CreateCurrencyByCodeUseCase.Params(DEFAULT_CURRENCY_CODE, currentValue)
-                val selectedCurrency = createCurrencyByCodeUseCase.run(params)
-                lastSelectedCurrency = selectedCurrency
-                loadData(selectedCurrency)
-            }
+            val params = GetCurrencyByCodeUseCase.Params(DEFAULT_CURRENCY_CODE, currentValue)
+            val selectedCurrency = getCurrencyByCodeUseCase.run(params)
+            lastSelectedCurrency = selectedCurrency
+            loadData(selectedCurrency)
         }
     }
 
@@ -45,37 +43,37 @@ class RatesViewModel(
     }
 
     fun stopRefreshList() {
-        loadDataJob?.cancel()
+        loadDataDisposable?.dispose()
     }
 
     fun setValue(value: String) {
-        val newValue = value.toDoubleOrNull() ?: 0.00
-        if (newValue != currentValue) {
-            loadDataJob?.cancelChildren()
+        val newValue = value.toDoubleOrNull()
+        newValue?.let {
+            if (newValue != currentValue) {
+                loadDataDisposable?.dispose()
 
-            currentValue = newValue
-
-            currencyList.value?.map { itemCurrency ->
-                if (itemCurrency.code != lastSelectedCurrency?.code) {
-                    EntityCurrency(
-                        itemCurrency.code,
-                        itemCurrency.name,
-                        itemCurrency.flag,
-                        itemCurrency.rate * currentValue
-                    )
-                } else {
-                    itemCurrency
-                }
-            }?.let { updatedList ->
-                currencyList.postValue(updatedList)
-            }
-
-            if (currentValue > 0) {
+                currentValue = newValue
                 lastSelectedCurrency = lastSelectedCurrency?.run {
                     EntityCurrency(
                         code, name, flag, currentValue
                     )
                 }
+
+                currencyList.value?.map {
+                    if (it.code != lastSelectedCurrency?.code) {
+                        EntityCurrency(
+                            it.code,
+                            it.name,
+                            it.flag,
+                            it.rate * currentValue
+                        )
+                    } else {
+                        it
+                    }
+                }?.let {
+                    currencyList.onNext(it)
+                }
+
                 lastSelectedCurrency?.apply { loadData(this) }
             }
         }
@@ -86,22 +84,24 @@ class RatesViewModel(
      * If exception retry after 10s
      */
     private fun loadData(selectedCurrency: EntityCurrency) {
-        loadDataJob?.cancel()
-        loadDataJob = viewModelScope.launch {
-            while (isActive) {
-                val params = GetRatesListUseCase.Params(selectedCurrency, currentValue)
-                when (val result = getRatesListUseCase.run(params)) {
-                    is ResultEntity.Success -> {
-                        errorMessage.postValue(null)
-                        currencyList.postValue(result.value)
-                        delay(1000)
-                    }
-                    is ResultEntity.Error -> {
-                        errorMessage.postValue(result.cause?.message)
-                        delay(10000)
-                    }
-                }
+        loadDataDisposable?.dispose()
+        val params = GetRatesListUseCase.Params(selectedCurrency, currentValue)
+        val observable = getRatesListUseCase.run(params)
+        loadDataDisposable = observable
+            .observeOn(AndroidSchedulers.mainThread())
+            .doOnError {
+                errorMessage.onNext(it.message ?: "Error")
             }
-        }
+            .doOnSuccess {
+                errorMessage.onNext("")
+                currencyList.onNext(it)
+            }
+            .retryWhen {
+                it.delay(10, TimeUnit.SECONDS)
+            }
+            .repeatWhen {
+                it.delay(1, TimeUnit.SECONDS)
+            }
+            .subscribe()
     }
 }

@@ -10,7 +10,7 @@ class CreateCurrencyByCodeUseCase(private val currencyDetailsRepository: Currenc
     BaseUseCase<EntityCurrency, CreateCurrencyByCodeUseCase.Params> {
     data class Params(val currencyCode: String, val currentValue: Double)
 
-    override suspend fun run(params: Params): EntityCurrency {
+    override fun run(params: Params): EntityCurrency {
         val selectedCurrencyName = currencyDetailsRepository.getName(params.currencyCode)
         val selectedCurrencyFlag = currencyDetailsRepository.getFlag(params.currencyCode)
         return EntityCurrency(

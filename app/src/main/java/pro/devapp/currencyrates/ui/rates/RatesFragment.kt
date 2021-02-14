@@ -9,17 +9,19 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.CompositeDisposable
 import pro.devapp.currencyrates.databinding.FragmentRatesBinding
 import pro.devapp.currencyrates.ui.viewBinding
-import pro.devapp.currencyrates.usecases.CreateCurrencyByCodeUseCase
+import pro.devapp.currencyrates.usecases.GetCurrencyByCodeUseCase
 import pro.devapp.currencyrates.usecases.GetRatesListUseCase
-import pro.devapp.storage.Storage
+import pro.devapp.storage.getCurrencyDetailsRepository
+import pro.devapp.storage.getCurrencyRatesRepository
 
 class RatesFragment : Fragment() {
 
     companion object {
         const val TAG = "RatesFragment"
-
         fun newInstance() = RatesFragment()
     }
 
@@ -28,48 +30,73 @@ class RatesFragment : Fragment() {
             override fun <T : ViewModel?> create(modelClass: Class<T>): T {
                 return RatesViewModel(
                     requireActivity().application,
-                    GetRatesListUseCase(Storage.getCurrencyRatesRepository(requireActivity().applicationContext)),
-                    CreateCurrencyByCodeUseCase(Storage.getCurrencyDetailsRepository(requireActivity().applicationContext))
+                    GetRatesListUseCase(getCurrencyRatesRepository(requireActivity().applicationContext)),
+                    GetCurrencyByCodeUseCase(getCurrencyDetailsRepository(requireActivity().applicationContext))
                 ) as T
             }
         }
     }
 
     private val screenBinding by viewBinding(FragmentRatesBinding::inflate)
+    private val compositeDisposable = CompositeDisposable()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
 
-        screenBinding.currencyList.selectItemListener = {
+        screenBinding.currencyList.clickSubject.subscribe {
             viewModel.setSelectedCurrency(it)
+        }.also {
+            compositeDisposable.add(it)
         }
 
         screenBinding.currencyList.setTextListener {
             viewModel.setValue(it)
         }
 
-        viewModel.currencyList.observe(viewLifecycleOwner) {
-            if (screenBinding.progress.visibility != View.GONE) {
-                screenBinding.progress.visibility = View.GONE
-                screenBinding.currencyList.visibility = View.VISIBLE
+        viewModel.currencyList
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe {
+                screenBinding.currencyList.submitList(it)
             }
-            screenBinding.currencyList.submitList(it)
-        }
+            .also {
+                compositeDisposable.add(it)
+            }
 
-        viewModel.errorMessage.observe(viewLifecycleOwner) { message ->
-            message?.let {
-                Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
+        viewModel.currencyList
+            .observeOn(AndroidSchedulers.mainThread())
+            .firstElement()
+            .subscribe {
+                screenBinding.currencyList.visibility = View.VISIBLE
+                screenBinding.progress.visibility = View.GONE
             }
-        }
+            .also {
+                compositeDisposable.add(it)
+            }
+
+        viewModel.errorMessage
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe { message ->
+                if (message.isNotEmpty()) {
+                    Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+                }
+            }
+            .also {
+                compositeDisposable.add(it)
+            }
 
         return screenBinding.root
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        compositeDisposable.clear()
+    }
+
     override fun onStart() {
         super.onStart()
-        viewModel.startRefreshList()
+        viewModel.startRefreshList(RatesViewModel.DEFAULT_CURRENCY_CODE)
     }
 
     override fun onStop() {

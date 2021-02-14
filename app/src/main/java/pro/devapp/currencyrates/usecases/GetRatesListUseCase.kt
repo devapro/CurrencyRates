@@ -1,21 +1,20 @@
 package pro.devapp.currencyrates.usecases
 
+import io.reactivex.Single
 import pro.devapp.core.entities.EntityCurrency
-import pro.devapp.core.entities.ResultEntity
 import pro.devapp.storage.repositories.CurrencyRatesRepository
 
 /**
  * Currency list
  */
 class GetRatesListUseCase(private val currencyRatesRepository: CurrencyRatesRepository) :
-    BaseUseCase<ResultEntity<List<EntityCurrency>>, GetRatesListUseCase.Params> {
+    BaseUseCase<Single<List<EntityCurrency>>, GetRatesListUseCase.Params> {
     data class Params(val selectedCurrency: EntityCurrency, val currentValue: Double)
 
-    override suspend fun run(params: Params): ResultEntity<List<EntityCurrency>> {
-        return when (val result =
-            currencyRatesRepository.getCurrencyRates(params.selectedCurrency.code)) {
-            is ResultEntity.Success -> {
-                val fullList = result.value.map {
+    override fun run(params: Params): Single<List<EntityCurrency>> {
+        return currencyRatesRepository.getCurrencyRates(params.selectedCurrency.code)
+            .map { result ->
+                val fullList = result.map {
                     EntityCurrency(
                         it.code,
                         it.name,
@@ -26,11 +25,7 @@ class GetRatesListUseCase(private val currencyRatesRepository: CurrencyRatesRepo
                 fullList.reverse()
                 fullList.add(params.selectedCurrency)
                 fullList.reverse()
-                ResultEntity.Success(fullList)
+                fullList
             }
-            is ResultEntity.Error -> {
-                ResultEntity.Error(result.cause)
-            }
-        }
     }
 }
