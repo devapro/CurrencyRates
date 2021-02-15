@@ -6,19 +6,19 @@ import io.reactivex.Single
 import io.reactivex.android.plugins.RxAndroidPlugins
 import io.reactivex.plugins.RxJavaPlugins
 import io.reactivex.schedulers.Schedulers
+import org.junit.Assert
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito
 import org.mockito.MockitoAnnotations
-import pro.devapp.core.entities.EntityCurrency
-import pro.devapp.currencyrates.data.getDefaultCurrencyEntity
+import pro.devapp.currencyrates.data.*
 import pro.devapp.currencyrates.ui.rates.RatesViewModel
 import pro.devapp.currencyrates.usecases.CreateCurrencyByCodeUseCase
+import pro.devapp.currencyrates.usecases.GetRatesListUseCase
 import pro.devapp.currencyrates.usecases.LoadRatesListUseCase
-import pro.devapp.currencyrates.utils.RxImmediateSchedulerRule
-import pro.devapp.storage.repositories.CurrencyRatesRepository
+import pro.devapp.currencyrates.utils.getOrAwaitValue
 
 class RatesViewModelTest {
 
@@ -26,20 +26,17 @@ class RatesViewModelTest {
     @JvmField
     val instantExecutorRule = InstantTaskExecutorRule()
 
-    @Rule
-    @JvmField
-    var testSchedulerRule = RxImmediateSchedulerRule()
-
     @Mock
-    lateinit var getCurrencyByCodeUseCase: CreateCurrencyByCodeUseCase
+    lateinit var createCurrencyByCodeUseCase: CreateCurrencyByCodeUseCase
 
     @Mock
     lateinit var loadRatesListUseCase: LoadRatesListUseCase
 
     @Mock
-    lateinit var application: Application
+    lateinit var getRatesListUseCase: GetRatesListUseCase
 
-    private val currency = getDefaultCurrencyEntity()
+    @Mock
+    lateinit var application: Application
 
     private lateinit var viewModel: RatesViewModel
 
@@ -49,206 +46,114 @@ class RatesViewModelTest {
         RxAndroidPlugins.setInitMainThreadSchedulerHandler { Schedulers.trampoline() }
         RxJavaPlugins.setIoSchedulerHandler { Schedulers.trampoline() }
 
-        viewModel = RatesViewModel(application, loadRatesListUseCase, getCurrencyByCodeUseCase)
+        Mockito
+            .`when`(loadRatesListUseCase.run(getLoadRatesListUseCaseParams()))
+            .thenReturn(Single.just(getCurrencyRatesList()))
+
+        Mockito
+            .`when`(createCurrencyByCodeUseCase.run(getCreateCurrencyParams()))
+            .thenReturn(getDefaultCurrencyEntity())
+
+        viewModel = RatesViewModel(
+            application,
+            loadRatesListUseCase,
+            getRatesListUseCase,
+            createCurrencyByCodeUseCase
+        )
     }
 
     @Test
-    fun getCurrencyList() {
+    fun `should call CreateCurrencyByCodeUseCase after first start`() {
+        val expectedCurrency = getDefaultCurrencyEntity()
+        val expectedParams = getCreateCurrencyParams()
         Mockito
-            .`when`(currencyRatesRepository.getCurrencyRates(RatesViewModel.DEFAULT_CURRENCY_CODE))
-            .thenReturn(Single.just(listOf(currency)))
+            .`when`(createCurrencyByCodeUseCase.run(expectedParams))
+            .thenReturn(expectedCurrency)
 
-        viewModel.currencyList.onNext(listOf(currency))
-
-        viewModel.currencyList.test()
-            .awaitCount(1)
-            .assertNoErrors()
-            .assertValue {
-                it.isNotEmpty()
-            }
-
-        viewModel.stopRefreshList()
-    }
-
-    @Test
-    fun getErrorMessage() {
-        val testException = Exception("Some test exception")
-        Mockito
-            .`when`(currencyRatesRepository.getCurrencyRates(RatesViewModel.DEFAULT_CURRENCY_CODE))
-            .thenReturn(Single.error(testException))
-
-        val getRatesListUseCase = LoadRatesListUseCase(currencyRatesRepository)
-
-        val viewModel = RatesViewModel(application, getRatesListUseCase, getCurrencyByCodeUseCase)
-        viewModel.setSelectedCurrency(currency)
-
-        viewModel.errorMessage.test()
-            .awaitCount(1)
-            .assertValue {
-                it.isNotEmpty()
-            }
-            .assertValue {
-                it == testException.message
-            }
-
-        viewModel.stopRefreshList()
-    }
-
-    @Test
-    fun startRefreshList() {
-        val currency = EntityCurrency(RatesViewModel.DEFAULT_CURRENCY_CODE, "", null, 0.00)
-        val currencyRatesRepository = Mockito.mock(CurrencyRatesRepository::class.java)
-        Mockito
-            .`when`(currencyRatesRepository.getCurrencyRates(RatesViewModel.DEFAULT_CURRENCY_CODE))
-            .thenReturn(
-                Single.just<List<EntityCurrency>>(
-                    listOf(
-                        EntityCurrency(
-                            RatesViewModel.DEFAULT_CURRENCY_CODE,
-                            "",
-                            null,
-                            0.00
-                        )
-                    )
-                )
-            )
-
-        Mockito
-            .`when`(
-                getCurrencyByCodeUseCase.run(
-                    CreateCurrencyByCodeUseCase.Params(
-                        RatesViewModel.DEFAULT_CURRENCY_CODE,
-                        1.00
-                    )
-                )
-            )
-            .thenReturn(currency)
-
-        val getRatesListUseCase = LoadRatesListUseCase(currencyRatesRepository)
-
-        val viewModel = RatesViewModel(application, getRatesListUseCase, getCurrencyByCodeUseCase)
         viewModel.startRefreshList()
-        viewModel.currencyList.test()
-            .awaitCount(3)
-            .assertNoErrors()
-            .assertValueAt(0) {
-                it.isNotEmpty()
-            }
 
-        viewModel.errorMessage.test()
-            .awaitCount(1)
-            .assertValueAt(0) {
-                it.isEmpty()
-            }
-
-        viewModel.stopRefreshList()
+        Mockito
+            .verify(createCurrencyByCodeUseCase, Mockito.times(1))
+            .run(expectedParams)
     }
 
     @Test
-    fun setSelectedCurrency() {
+    fun `should load currency rates list`() {
+        val expectedParams = getLoadRatesListUseCaseParams()
+        val expectedCurrencyList = getCurrencyRatesList()
         Mockito
-            .`when`(currencyRatesRepository.getCurrencyRates(RatesViewModel.DEFAULT_CURRENCY_CODE))
-            .thenReturn(Single.just<List<EntityCurrency>>(listOf(currency)))
+            .`when`(loadRatesListUseCase.run(expectedParams))
+            .thenReturn(Single.just(expectedCurrencyList))
 
-        val getRatesListUseCase = LoadRatesListUseCase(currencyRatesRepository)
-
-        val viewModel = RatesViewModel(application, getRatesListUseCase, getCurrencyByCodeUseCase)
-        viewModel.setSelectedCurrency(currency)
-        viewModel.currencyList.test()
-            .awaitCount(1)
-            .assertNoErrors()
-            .assertValue {
-                it.isNotEmpty()
-            }
-
-        viewModel.errorMessage.test()
-            .awaitCount(1)
-            .assertValue {
-                it.isEmpty()
-            }
-
-        viewModel.stopRefreshList()
-    }
-
-    @Test
-    fun stopRefreshList() {
-        Mockito
-            .`when`(currencyRatesRepository.getCurrencyRates(RatesViewModel.DEFAULT_CURRENCY_CODE))
-            .thenReturn(Single.just<List<EntityCurrency>>(listOf(currency)))
-
-        Mockito
-            .`when`(
-                getCurrencyByCodeUseCase.run(
-                    CreateCurrencyByCodeUseCase.Params(
-                        RatesViewModel.DEFAULT_CURRENCY_CODE,
-                        1.00
-                    )
-                )
-            )
-            .thenReturn(currency)
-
-        val getRatesListUseCase = LoadRatesListUseCase(currencyRatesRepository)
-
-        val viewModel = RatesViewModel(application, getRatesListUseCase, getCurrencyByCodeUseCase)
         viewModel.startRefreshList()
-        viewModel.currencyList.test()
-            .awaitCount(3)
-            .assertNoErrors()
-            .assertValueAt(0) {
-                it.isNotEmpty()
-            }
 
-        viewModel.errorMessage.test()
-            .awaitCount(1)
-            .assertValueAt(0) {
-                it.isEmpty()
-            }
+        Mockito
+            .verify(loadRatesListUseCase, Mockito.times(1))
+            .run(expectedParams)
 
-        viewModel.stopRefreshList()
-
-        viewModel.currencyList.test()
-            .awaitCount(1)
-
-        viewModel.errorMessage.test()
-            .awaitCount(1)
+        Assert.assertEquals(expectedCurrencyList, viewModel.currencyList.getOrAwaitValue())
     }
 
     @Test
-    fun setValue() {
+    fun `should get currency list before api call after value update`() {
+        val expectedLoadUseCaseParams = getLoadRatesListUseCaseParams(2.00)
+        val expectedParams = getListUseCaseParams()
+        val expectedCurrencyList = getCurrencyRatesList()
 
         Mockito
-            .`when`(currencyRatesRepository.getCurrencyRates(RatesViewModel.DEFAULT_CURRENCY_CODE))
-            .thenReturn(Single.just<List<EntityCurrency>>(listOf(currency)))
+            .`when`(loadRatesListUseCase.run(expectedLoadUseCaseParams))
+            .thenReturn(Single.just(expectedCurrencyList))
 
         Mockito
-            .`when`(
-                getCurrencyByCodeUseCase.run(
-                    CreateCurrencyByCodeUseCase.Params(
-                        RatesViewModel.DEFAULT_CURRENCY_CODE,
-                        1.00
-                    )
-                )
-            )
-            .thenReturn(currency)
+            .`when`(getRatesListUseCase.run(expectedParams))
+            .thenReturn(Single.just(expectedCurrencyList))
 
-        val getRatesListUseCase = LoadRatesListUseCase(currencyRatesRepository)
-
-        val viewModel = RatesViewModel(application, getRatesListUseCase, getCurrencyByCodeUseCase)
         viewModel.startRefreshList()
-        viewModel.setValue("2.00")
-        viewModel.currencyList.test()
-            .awaitCount(3)
-            .assertNoErrors()
-            .assertValueAt(0) {
-                it[0].rate == 2.00
-            }
+        viewModel.setValue("2")
 
-        viewModel.errorMessage.test()
-            .awaitCount(1)
-            .assertValueAt(0) {
-                it.isEmpty()
-            }
+        val orderVerifier = Mockito.inOrder(getRatesListUseCase, loadRatesListUseCase)
+        orderVerifier
+            .verify(getRatesListUseCase, Mockito.times(1))
+            .run(expectedParams)
+        orderVerifier
+            .verify(loadRatesListUseCase, Mockito.times(1))
+            .run(expectedLoadUseCaseParams)
+
+        Assert.assertEquals(expectedCurrencyList, viewModel.currencyList.getOrAwaitValue())
+    }
+
+    @Test
+    fun `should stop load list`() {
+        val expectedParams = getLoadRatesListUseCaseParams()
+        val expectedCurrencyList = getCurrencyRatesList()
+        Mockito
+            .`when`(loadRatesListUseCase.run(expectedParams))
+            .thenReturn(Single.just(expectedCurrencyList))
+
+        val orderVerifier = Mockito.inOrder(loadRatesListUseCase)
+
+        viewModel.startRefreshList()
+        orderVerifier
+            .verify(loadRatesListUseCase, Mockito.times(1))
+            .run(expectedParams)
 
         viewModel.stopRefreshList()
+        orderVerifier
+            .verify(loadRatesListUseCase, Mockito.times(0))
+            .run(expectedParams)
+    }
+
+    @Test
+    fun `should set error message when api get error`() {
+        val expectedParams = getLoadRatesListUseCaseParams()
+        val expectedErrorMessage = "test"
+        val expectedException = Throwable(expectedErrorMessage)
+        Mockito
+            .`when`(loadRatesListUseCase.run(expectedParams))
+            .thenReturn(Single.error(expectedException))
+
+        viewModel.startRefreshList()
+
+        Assert.assertEquals(expectedErrorMessage, viewModel.errorMessage.getOrAwaitValue())
     }
 }

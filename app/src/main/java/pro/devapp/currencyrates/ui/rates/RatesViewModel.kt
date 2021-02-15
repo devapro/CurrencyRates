@@ -98,8 +98,7 @@ class RatesViewModel(
         loadDataDisposable?.dispose()
         loadDataDisposable = selectedCurrency?.let { currency ->
             val params = LoadRatesListUseCase.Params(currency, currentValue)
-            val observable = loadRatesListUseCase.run(params)
-            observable
+            loadRatesListUseCase.run(params)
                 .observeOn(AndroidSchedulers.mainThread())
                 .doOnError {
                     errorMessage.postValue(it.message ?: "Error")

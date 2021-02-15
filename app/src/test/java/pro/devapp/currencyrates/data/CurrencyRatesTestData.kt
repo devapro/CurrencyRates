@@ -1,11 +1,30 @@
 package pro.devapp.currencyrates.data
 
 import pro.devapp.core.entities.EntityCurrency
-import pro.devapp.currencyrates.ui.rates.RatesViewModel
+import pro.devapp.currencyrates.usecases.CreateCurrencyByCodeUseCase
+import pro.devapp.currencyrates.usecases.GetRatesListUseCase
+import pro.devapp.currencyrates.usecases.LoadRatesListUseCase
 
-fun getDefaultCurrencyEntity() = EntityCurrency(
-    RatesViewModel.DEFAULT_CURRENCY_CODE,
+fun getCreateCurrencyParams() = CreateCurrencyByCodeUseCase.Params(
+    "EUR",
+    1.00
+)
+
+fun getDefaultCurrencyEntity(value: Double = 1.00) = EntityCurrency(
+    "EUR",
     "",
     null,
-    0.00
+    value
+)
+
+fun getLoadRatesListUseCaseParams(value: Double = 1.00) = LoadRatesListUseCase.Params(
+    getDefaultCurrencyEntity(value),
+    value
+)
+
+fun getCurrencyRatesList() = listOf(getDefaultCurrencyEntity(1.00))
+
+fun getListUseCaseParams() = GetRatesListUseCase.Params(
+    getDefaultCurrencyEntity(2.00),
+    2.00
 )
