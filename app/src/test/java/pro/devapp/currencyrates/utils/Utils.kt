@@ -1,13 +1,10 @@
-package pro.devapp.currencyrates
+package pro.devapp.currencyrates.utils
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
-import org.mockito.Mockito
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
-
-inline fun <reified T> mock(): T = Mockito.mock(T::class.java)
 
 fun <T> LiveData<T>.getOrAwaitValue(
     time: Long = 2,

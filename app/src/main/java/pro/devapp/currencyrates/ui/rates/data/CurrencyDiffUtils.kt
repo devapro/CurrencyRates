@@ -1,6 +1,7 @@
-package pro.devapp.currencyrates.ui.rates.widgets.list
+package pro.devapp.currencyrates.ui.rates.data
 
 import androidx.recyclerview.widget.DiffUtil
+import pro.devapp.currencyrates.ui.rates.widgets.list.ListItem
 
 class CurrencyDiffUtils(
     private val newItems: List<ListItem>,

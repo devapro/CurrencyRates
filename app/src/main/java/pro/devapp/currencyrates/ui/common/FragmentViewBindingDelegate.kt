@@ -1,4 +1,4 @@
-package pro.devapp.currencyrates.ui
+package pro.devapp.currencyrates.ui.common
 
 import android.view.LayoutInflater
 import androidx.fragment.app.Fragment

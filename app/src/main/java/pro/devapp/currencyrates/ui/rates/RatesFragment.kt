@@ -9,12 +9,12 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import pro.devapp.currencyrates.databinding.FragmentRatesBinding
-import pro.devapp.currencyrates.ui.viewBinding
+import pro.devapp.currencyrates.ui.common.viewBinding
 import pro.devapp.currencyrates.usecases.CreateCurrencyByCodeUseCase
 import pro.devapp.currencyrates.usecases.GetRatesListUseCase
+import pro.devapp.currencyrates.usecases.LoadRatesListUseCase
 import pro.devapp.storage.Storage.getCurrencyDetailsRepository
 import pro.devapp.storage.Storage.getCurrencyRatesRepository
 
@@ -30,6 +30,7 @@ class RatesFragment : Fragment() {
             override fun <T : ViewModel?> create(modelClass: Class<T>): T {
                 return RatesViewModel(
                     requireActivity().application,
+                    LoadRatesListUseCase(getCurrencyRatesRepository(requireActivity().applicationContext)),
                     GetRatesListUseCase(getCurrencyRatesRepository(requireActivity().applicationContext)),
                     CreateCurrencyByCodeUseCase(getCurrencyDetailsRepository(requireActivity().applicationContext))
                 ) as T
@@ -43,7 +44,7 @@ class RatesFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
 
         screenBinding.currencyList.clickSubject.subscribe {
             viewModel.setSelectedCurrency(it)
@@ -55,36 +56,19 @@ class RatesFragment : Fragment() {
             viewModel.setValue(it)
         }
 
-        viewModel.currencyList
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe {
-                screenBinding.currencyList.submitList(it)
-            }
-            .also {
-                compositeDisposable.add(it)
-            }
-
-        viewModel.currencyList
-            .observeOn(AndroidSchedulers.mainThread())
-            .firstElement()
-            .subscribe {
+        viewModel.currencyList.observe(viewLifecycleOwner) {
+            if (it.isNotEmpty()) {
                 screenBinding.currencyList.visibility = View.VISIBLE
                 screenBinding.progress.visibility = View.GONE
             }
-            .also {
-                compositeDisposable.add(it)
-            }
+            screenBinding.currencyList.submitList(it)
+        }
 
-        viewModel.errorMessage
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe { message ->
-                if (message.isNotEmpty()) {
-                    Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
-                }
+        viewModel.errorMessage.observe(viewLifecycleOwner) { message ->
+            message?.let {
+                Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
             }
-            .also {
-                compositeDisposable.add(it)
-            }
+        }
 
         return screenBinding.root
     }
