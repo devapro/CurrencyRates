@@ -42,4 +42,20 @@ jobs:
       - store_artifacts:
           path: app/build/outputs/apk/
           destination: artifacts/
-      - publish-github-release
+
+workflows:
+  version: 2
+  main:
+    jobs:
+      - build:
+          filters:
+            tags:
+              only: /^\d+\.\d+\.\d+$/
+      - publish-github-release:
+          requires:
+            - build
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^\d+\.\d+\.\d+$/
