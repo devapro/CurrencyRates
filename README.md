@@ -10,10 +10,11 @@ That includes:
  - clean architecture layers
  - RecycleView diff utils
  - Rx and Coroutines (see Branches)
+ - ci
+ - tests
 
  TODO:
- - tests
- - ci
+ - write more tests
 
 #### Branches:
  - master - rxJava2 implementation
