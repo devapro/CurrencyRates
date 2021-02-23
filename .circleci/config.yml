@@ -59,3 +59,21 @@ workflows:
               ignore: /.*/
             tags:
               only: /^\d+\.\d+\.\d+$/
+
+
+publish-github-release:
+  docker:
+    - image: cibuilds/github:0.10
+  steps:
+    - attach_workspace:
+        at: ./artifacts
+    - run:
+        filters:
+          #          branches:
+          #            only: master
+          tags:
+            only: /^\d+\.\d+\.\d+$/
+        name: "Publish Release on GitHub"
+        command: |
+          VERSION=$CIRCLE_TAG
+          ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION} ./artifacts/
