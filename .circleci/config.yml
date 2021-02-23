@@ -42,35 +42,10 @@ jobs:
       - store_artifacts:
           path: app/build/outputs/apk/
           destination: artifacts/
-
-workflows:
-  version: 2
-  main:
-    jobs:
-      - build:
-          filters:
-            tags:
-              only: /^\d+\.\d+\.\d+$/
-      - publish-github-release:
-          requires:
-            - build
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^\d+\.\d+\.\d+$/
-
-
-publish-github-release:
-  docker:
-    - image: cibuilds/github:0.10
-  steps:
-    - attach_workspace:
-        at: ./artifacts
-    - run:
+      - attach_workspace:
+          at: ./artifacts
+      - run:
         filters:
-          #          branches:
-          #            only: master
           tags:
             only: /^\d+\.\d+\.\d+$/
         name: "Publish Release on GitHub"
