@@ -42,11 +42,11 @@ jobs:
                      - store_artifacts:
                      path: app/build/outputs/apk/
                      destination: artifacts/
-      - deploy:
-          filters:
-            tags:
-              only: /^\d+\.\d+\.\d+$/
-          name: "Deploy to GitHub 🎉🎉"
-          command: |
-            VERSION=$CIRCLE_TAG
-            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION} ./artifacts/
+#      - deploy:
+#          filters:
+#            tags:
+#              only: /^\d+\.\d+\.\d+$/
+#          name: "Deploy to GitHub 🎉🎉"
+#          command: |
+#            VERSION=$CIRCLE_TAG
+#            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION} ./artifacts/
