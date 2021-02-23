@@ -8,7 +8,7 @@ jobs:
     working_directory: ~/code
     #executor: android/android
     docker:
-      - image: circleci/android:api-25-alpha
+      - image: circleci/android:api-29
         auth:
           username: arsenyzp
           password: $DOCKERHUB_PASSWORD
